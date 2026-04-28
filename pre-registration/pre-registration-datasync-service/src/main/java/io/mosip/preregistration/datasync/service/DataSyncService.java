@@ -294,10 +294,13 @@ public class DataSyncService {
 			}
 		} catch (AnonymousProfileException apex) {
 			log.debug("sessionId", "idType", "id" + ExceptionUtils.getStackTrace(apex));
-			log.error("Unable to save AnonymousProfile in getPreRegistrationData method of datasync service -" + apex.getMessage());
+			log.error("Unable to save AnonymousProfile in getPreRegistrationData for preId {} and machineId {} - {}",
+					preId, machineId, apex.getMessage());
 		} catch (Exception ex) {
 			log.debug("sessionId", "idType", "id" + ExceptionUtils.getStackTrace(ex));
-			log.error("In getPreRegistrationData method of datasync service -" + ex.getMessage());
+			log.error(
+					"Failed to fetch pre-registration packet in fetchPreRegistrationData for preId {} and machineId {} - {}",
+					preId, machineId, ex.getMessage());
 			new DataSyncExceptionCatcher().handle(ex, responseDto);
 		} finally {
 			if (isRetrieveSuccess) {
