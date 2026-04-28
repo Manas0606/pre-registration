@@ -1,5 +1,6 @@
 package io.mosip.preregistration.datasync.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.mosip.kernel.core.logger.spi.Logger;
@@ -90,9 +92,12 @@ public class DataSyncController {
 			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(schema = @Schema(hidden = true))),
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content(schema = @Schema(hidden = true))) })
 	public ResponseEntity<MainResponseDTO<PreRegArchiveDTO>> retrievePreRegistrations(
-			@PathVariable(required = true, value = "preRegistrationId") String preRegistrationId) {
+			@PathVariable(required = true, value = "preRegistrationId") String preRegistrationId,
+			@RequestParam(required = false, value = "version") String requestVersion,
+			HttpServletRequest request) {
 		log.info("sessionId", "idType", "id",
-				"In Datasync controller for retreiving pre-registration data with preRegId " + preRegistrationId);
+				"Received pre-registration fetch request at {} with preRegId {} and version {}",
+				request.getRequestURI(), preRegistrationId, requestVersion);
 		return ResponseEntity.status(HttpStatus.OK).body(dataSyncService.getPreRegistrationData(preRegistrationId));
 	}
 
@@ -109,10 +114,12 @@ public class DataSyncController {
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content(schema = @Schema(hidden = true))) })
 	public ResponseEntity<MainResponseDTO<PreRegArchiveDTO>> retrievePreRegistrations(
 			@PathVariable(required = true, value = "preRegistrationId") String preRegistrationId,
-			@PathVariable(required = true, value = "machineId") String machineId) {
+			@PathVariable(required = true, value = "machineId") String machineId,
+			@RequestParam(required = false, value = "version") String requestVersion,
+			HttpServletRequest request) {
 		log.info("sessionId", "idType", "id",
-				"In Datasync controller for retreiving pre-registration data with preRegId and machineId "
-						+ preRegistrationId + " " + machineId);
+				"Received pre-registration fetch request at {} with preRegId {}, machineId {} and version {}",
+				request.getRequestURI(), preRegistrationId, machineId, requestVersion);
 		return ResponseEntity.status(HttpStatus.OK)
 				.body(dataSyncService.fetchPreRegistrationData(preRegistrationId, machineId));
 	}

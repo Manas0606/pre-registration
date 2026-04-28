@@ -34,6 +34,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -1008,7 +1009,15 @@ public class DataSyncServiceUtil {
 				applicationInfo = body.getResponse();
 			}
 		} catch (RestClientException ex) {
-			log.error("In getPreRegistrationInfo method of datasync service util ", ex);
+			if (ex instanceof HttpStatusCodeException) {
+				HttpStatusCodeException httpStatusException = (HttpStatusCodeException) ex;
+				log.error(
+						"Failed to fetch pre-registration info for prid {}. Status: {}, response body: {}",
+						prid, httpStatusException.getStatusCode(), httpStatusException.getResponseBodyAsString(),
+						httpStatusException);
+			} else {
+				log.error("Failed to fetch pre-registration info for prid {}", prid, ex);
+			}
 
 			throw new DataSyncRecordNotFoundException(ErrorCodes.PRG_DATA_SYNC_019.getCode(),
 					ErrorMessages.FAILED_TO_FETCH_INFO_FOR_PRID.getMessage(), null);
