@@ -32,13 +32,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gnupg2
 
+      # ✅ Maven cache
       - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
+      # ✅ Maven settings
       - name: Setup Maven settings
         run: |
           cat <<EOF > $GITHUB_WORKSPACE/settings.xml
@@ -65,6 +65,7 @@ jobs:
           </settings>
           EOF
 
+      # ✅ Build project
       - name: Build with Maven
         run: |
           cd ./pre-registration
@@ -73,9 +74,17 @@ jobs:
             -DskipTests \
             -Dgpg.skip=true
 
-      - name: Remove unnecessary jars
+      # ✅ 🔥 VERY IMPORTANT: verify jar exists
+      - name: Verify built JAR
         run: |
-          find . -name "*.jar" ! -perm -111 -delete
+          echo "Listing JAR files..."
+          find pre-registration -name "*.jar"
+
+      # ✅ Copy jar into service folder (ensures Docker sees it)
+      - name: Copy jar to Docker context
+        run: |
+          cp pre-registration/pre-registration-datasync-service/target/*.jar \
+          pre-registration/pre-registration-datasync-service/app.jar
 
       # ✅ Docker build
       - name: Build Docker image
@@ -83,16 +92,21 @@ jobs:
           cd "${{env.SERVICE_LOCATION}}"
           docker build -t ${{ env.SERVICE_NAME }} .
 
+      # ✅ Login Docker
       - name: Login to Docker Hub
         run: |
           echo "${{ secrets.release_docker_hub }}" | docker login \
           -u ${{ secrets.actor_docker_hub }} --password-stdin
 
+      # ✅ Push image
       - name: Push Docker image
         run: |
           IMAGE_ID=$NAMESPACE/$SERVICE_NAME
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           VERSION=$BRANCH_NAME
+
+          echo "IMAGE_ID=$IMAGE_ID"
+          echo "VERSION=$VERSION"
 
           docker tag $SERVICE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
